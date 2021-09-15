@@ -33,11 +33,9 @@ type resp struct {
 type unmarshalResp struct {
 	Expr string `json:"expr"`
 	Res  int    `json:"res"`
-	Err string `json:"err"`
+	Err  string `json:"err"`
 }
 
-// TODO: long function!
-// move gorotine to separate function
 func main() {
 	logrus.SetFormatter(new(logrus.JSONFormatter))
 
