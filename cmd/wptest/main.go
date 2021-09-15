@@ -131,7 +131,7 @@ func calculate(exprLen uint, db *gorm.DB, wg *sync.WaitGroup) {
 
 	db.Create(&res)
 
-	fmt.Println(string(body))
+	logrus.Print(string(body))
 }
 
 func parseResp(data []byte) resp {
