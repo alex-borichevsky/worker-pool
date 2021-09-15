@@ -8,8 +8,8 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/lib/pq"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -37,19 +37,23 @@ type unmarshalResp struct {
 }
 
 func main() {
-	logrus.SetFormatter(new(logrus.JSONFormatter))
+
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
 
 	if err := initConfig(); err != nil {
-		logrus.Fatalf("error initializing configs: %s", err.Error())
+		logger.Fatal("error initializing configs:",
+			zap.Error(err))
 	}
 
 	start := time.Now()
 
-	logrus.Print("connecting")
+	logger.Info("connecting")
 
 	db, err := gorm.Open("postgres", pgConfig())
 	if err != nil {
-		logrus.Panic(err)
+		logger.Panic("failed to connect database:",
+			zap.Error(err))
 	}
 
 	defer db.Close()
@@ -73,7 +77,9 @@ func main() {
 
 	elapsed := time.Since(start)
 
-	logrus.Print("took ===============> %s\n", elapsed)
+	logger.Info("took ===============>",
+		zap.Duration("", elapsed),
+	)
 }
 
 func initConfig() error {
@@ -93,16 +99,21 @@ func pgConfig() string {
 }
 
 func calculate(exprLen uint, db *gorm.DB, wg *sync.WaitGroup) {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
 	defer wg.Done()
 
 	expr := ex.Generate(exprLen)
 
-	logrus.Print("requested expression is: %s\n", expr)
+	logger.Info("requested expression is: ",
+		zap.String("expr", expr))
 
 	URL, err := url.Parse(BaseURL)
 
 	if err != nil {
-		logrus.Error("URL parsing failed")
+		logger.Error("URL parsing failed:",
+			zap.Error(err))
 	}
 
 	params := url.Values{}
@@ -111,18 +122,19 @@ func calculate(exprLen uint, db *gorm.DB, wg *sync.WaitGroup) {
 
 	URL.RawQuery = params.Encode()
 
-	logrus.Print(URL)
+	logger.Info(URL.String())
 
 	resp, err := http.Get(URL.String())
 
 	if err != nil {
-		logrus.Error(err)
+		logger.Error("failed to fetch URL",
+			zap.Error(err))
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		logrus.Error(err)
+		logger.Error(err.Error())
 	}
 
 	defer resp.Body.Close()
@@ -131,14 +143,18 @@ func calculate(exprLen uint, db *gorm.DB, wg *sync.WaitGroup) {
 
 	db.Create(&res)
 
-	logrus.Print(string(body))
+	logger.Info(string(body))
 }
 
 func parseResp(data []byte) resp {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
 	var ur unmarshalResp
 	err := json.Unmarshal(data, &ur)
 	if err != nil {
-		logrus.Fatal(err)
+		logger.Fatal("unmarshal json error: ",
+			zap.Error(err))
 	}
 
 	return resp{
