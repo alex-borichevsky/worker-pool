@@ -1,7 +1,9 @@
 db:
-  username: "user"
+#  username: "user"
+  username: "postgres"
   host: "postgres"
   port: 5432
-  password: "mypassword"
-  dbname: "user"
+#  password: "mypassword"
+  password: "postgres"
+  dbname: "users"
   sslmode: "disable"

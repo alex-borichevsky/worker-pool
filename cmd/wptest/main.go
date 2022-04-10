@@ -21,6 +21,10 @@ const (
 	DefaultGoroutines       = 5
 	DefaultExpressionLength = 3
 	BaseURL                 = "http://192.168.99.100:8080/evaluate/"
+
+//BaseURL                 = "http://localhost:8080/evaluate/"
+//BaseURL                 = "http://localhost:9000/evaluate/"
+
 )
 
 type resp struct {
